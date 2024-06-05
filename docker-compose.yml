@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  search-webscraper-markdown:
+    build:
+      context: .
+      dockerfile: Dockerfile  # This refers to your Python FastAPI Dockerfile
+    container_name: search-webscraper-markdown
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    
