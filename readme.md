@@ -6,6 +6,22 @@
 
 This project provides a powerful web scraping tool that fetches search results and converts them into Markdown format using FastAPI, SearXNG, and Browserless. It includes the capability to use proxies for web scraping and handles HTML content conversion to Markdown efficiently.
 
+## Table of Contents
+
+1. [Features](#features)
+2. [Prerequisites](#prerequisites)
+3. [Docker Setup](#docker-setup)
+4. [Manual Setup](#manual-setup)
+5. [Usage](#usage)
+   - [Search Endpoint](#search-endpoint)
+   - [Fetch URL Content](#fetch-url-content)
+6. [Using Proxies](#using-proxies)
+7. [Code Explanation](#code-explanation)
+8. [License](#license)
+9. [Author](#author)
+10. [Contributing](#contributing)
+11. [Acknowledgements](#acknowledgements)
+
 ## Features
 
 - **FastAPI**: A modern, fast web framework for building APIs with Python.
@@ -20,13 +36,32 @@ Ensure you have the following installed:
 
 - Python 3.11
 - Virtualenv
-- Docker (for searxng or browserless)
+- Docker
 
-## Setup Instructions
+## Docker Setup
+
+You can use Docker to simplify the setup process. Follow these steps:
 
 1. **Clone the repository**:
     ```sh
-    git clone https://github.com/your-username/search-result-scraper-markdown.git
+    git clone https://github.com/essamamdani/search-result-scraper-markdown.git
+    cd search-result-scraper-markdown
+    ```
+
+2. **Run Docker Compose**:
+    ```sh
+    docker compose up --build
+    ```
+
+With this setup, if you change the `.env` or `main.py` file, you no longer need to restart Docker. Changes will be reloaded automatically.
+
+## Manual Setup
+
+Follow these steps for manual setup:
+
+1. **Clone the repository**:
+    ```sh
+    git clone https://github.com/essamamdani/search-result-scraper-markdown.git
     cd search-result-scraper-markdown
     ```
 
@@ -43,7 +78,7 @@ Ensure you have the following installed:
 
 4. **Create a .env file** in the root directory with the following content:
     ```bash
-    SEARXNG_URL=http://localhost:8888
+    SEARXNG_URL=http://localhost:8080
     BROWSERLESS_URL=http://localhost:3000
     TOKEN=BROWSERLESS_TOKEN
     #PROXY_PROTOCOL=http
@@ -57,8 +92,6 @@ Ensure you have the following installed:
 5. **Run Docker containers for SearXNG and Browserless**:
     ```sh
     ./run-services.sh
-    # or
-    docker compose up --build
     ```
 
 6. **Start the FastAPI application**:
@@ -90,6 +123,10 @@ curl "http://localhost:8000/r/https://example.com"
 
 This project uses Geonode proxies for web scraping. You can use [my Geonode affiliate link](https://geonode.com/invite/47389) to get started with their proxy services.
 
+## Code Explanation
+
+For a detailed explanation of the code, visit the article [here](https://www.essamamdani.com/articles/search-result-scraper-markdown).
+
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
@@ -107,3 +144,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 - [FastAPI](https://fastapi.tiangolo.com/)
 - [SearXNG](https://github.com/searxng/searxng)
 - [Browserless](https://www.browserless.io/)
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=essamamdani/search-result-scraper-markdown&type=Date)](https://star-history.com/#essamamdani/search-result-scraper-markdown&Date)
