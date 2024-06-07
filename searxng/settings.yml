@@ -17,3 +17,14 @@ search:
   formats:
     - html
     - json
+
+# using_tor_proxy: false
+# proxies:
+#   http:
+#     - http://proxy1:8080
+#     - http://proxy2:8080
+#   https:
+#     - http://proxy1:8080
+#     - http://proxy2:8080
+#     - socks5://user:password@proxy3:1080
+#     - socks5h://user:password@proxy4:1080
