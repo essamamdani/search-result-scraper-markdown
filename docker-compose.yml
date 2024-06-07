@@ -6,14 +6,14 @@ services:
       context: .
       dockerfile: Dockerfile  # This refers to your Python FastAPI Dockerfile
     container_name: search-webscraper-markdown
-    env_file:
-      - .env
     ports:
       - "8000:8000"
     depends_on:
       - searxng
       - browserless
-
+    volumes:
+      - .:/app 
+    
   searxng:
     container_name: searxng
     image: docker.io/searxng/searxng:latest

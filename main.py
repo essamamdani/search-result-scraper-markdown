@@ -5,6 +5,7 @@ from fastapi import FastAPI, Query
 from fastapi.responses import JSONResponse, PlainTextResponse
 from markdownify import markdownify as md
 from bs4 import BeautifulSoup, Comment
+import json
 
 # Load .env file
 load_dotenv()
@@ -19,6 +20,9 @@ PROXY_USERNAME = os.getenv('PROXY_USERNAME')
 PROXY_PASSWORD = os.getenv('PROXY_PASSWORD')
 PROXY_PORT = os.getenv('PROXY_PORT')
 REQUEST_TIMEOUT = int(os.getenv('REQUEST_TIMEOUT', '30'))
+
+# Domains that should only be accessed using Browserless
+domains_only_for_browserless = ["twitter", "x", "facebook"] # Add more domains here
 
 # Create FastAPI app
 app = FastAPI()
@@ -41,7 +45,15 @@ def fetch_normal_content(url, proxies):
 def fetch_browserless_content(url, proxies):
     try:
         browserless_url = f"{BROWSERLESS_URL}/content"
+        
+        params = {}
+        if TOKEN:
+            params['token'] = TOKEN
+            
         proxy_url = f"{PROXY_PROTOCOL}://{PROXY_URL}:{PROXY_PORT}" if PROXY_URL and PROXY_PORT else None
+        if proxy_url:
+            params['--proxy-server'] = proxy_url
+            
         browserless_data = {
             "url": url,
             "rejectResourceTypes": ["image"],
@@ -49,20 +61,21 @@ def fetch_browserless_content(url, proxies):
             "gotoOptions": {"waitUntil": "networkidle2"},
             "bestAttempt": True
         }
-        headers = {
-            'Cache-Control': 'no-cache',
-            'Content-Type': 'application/json'
-        }
-        if proxy_url:
-            browserless_data["--proxy-server"] = proxy_url
         if PROXY_USERNAME and PROXY_PASSWORD:
             browserless_data["authenticate"] = {
                 "username": PROXY_USERNAME,
                 "password": PROXY_PASSWORD
             }
-        response = httpx.post(browserless_url, json=browserless_data, headers=headers, timeout=REQUEST_TIMEOUT, proxies=proxies)
+            
+        headers = {
+            'Cache-Control': 'no-cache',
+            'Content-Type': 'application/json'
+        }
+        
+        response = httpx.post(browserless_url, params=params, headers=headers, data=json.dumps(browserless_data), timeout=REQUEST_TIMEOUT*2)
+
         response.raise_for_status()
-        return response.json().get("data")
+        return response.text
     except httpx.RequestError as e:
         print(f"An error occurred while requesting Browserless for {url}: {e}")
     except httpx.HTTPStatusError as e:
@@ -77,10 +90,12 @@ def fetch_content(url):
             "https://": f"{PROXY_PROTOCOL}://{PROXY_USERNAME}:{PROXY_PASSWORD}@{PROXY_URL}:{PROXY_PORT}"
         }
         print(f"Using proxy {proxies}")
-
-    content = fetch_normal_content(url, proxies)
-    if content is None:
+    if any(domain in url for domain in domains_only_for_browserless):
         content = fetch_browserless_content(url, proxies)
+    else:
+        content = fetch_normal_content(url, proxies)
+        if content is None:
+            content = fetch_browserless_content(url, proxies)
 
     return content
 
