@@ -10,4 +10,35 @@ services:
       - .env
     ports:
       - "8000:8000"
-    
+    depends_on:
+      - searxng
+      - browserless
+
+  searxng:
+    container_name: searxng
+    image: docker.io/searxng/searxng:latest
+    restart: unless-stopped
+    networks:
+      - default
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./searxng:/etc/searxng:rw
+
+  browserless:
+    container_name: browserless
+    image: ghcr.io/browserless/chromium
+    restart: unless-stopped
+    networks:
+      - default
+    ports:
+      - "3000:3000"
+    environment:
+      - TOKEN=your_browserless_token_here  # Replace with your actual token
+      - MAX_CONCURRENT_SESSIONS=10
+      - TIMEOUT=60000
+      - QUEUED=10
+
+networks:
+  default:
+    driver: bridge

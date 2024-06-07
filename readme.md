@@ -42,21 +42,23 @@ Ensure you have the following installed:
     ```
 
 4. **Create a .env file** in the root directory with the following content:
-    ```env
+    ```bash
     SEARXNG_URL=http://localhost:8888
     BROWSERLESS_URL=http://localhost:3000
     TOKEN=BROWSERLESS_TOKEN
-    PROXY_PROTOCOL=http
-    PROXY_URL=your_proxy_url
-    PROXY_USERNAME=your_proxy_username
-    PROXY_PASSWORD=your_proxy_password
-    PROXY_PORT=your_proxy_port
+    #PROXY_PROTOCOL=http
+    #PROXY_URL=your_proxy_url
+    #PROXY_USERNAME=your_proxy_username
+    #PROXY_PASSWORD=your_proxy_password
+    #PROXY_PORT=your_proxy_port
     REQUEST_TIMEOUT=300
     ```
 
 5. **Run Docker containers for SearXNG and Browserless**:
     ```sh
     ./run-services.sh
+    # or
+    docker compose up --build
     ```
 
 6. **Start the FastAPI application**:
