@@ -22,7 +22,7 @@ PROXY_PORT = os.getenv('PROXY_PORT')
 REQUEST_TIMEOUT = int(os.getenv('REQUEST_TIMEOUT', '30'))
 
 # Domains that should only be accessed using Browserless
-domains_only_for_browserless = ["twitter", "x", "facebook"] # Add more domains here
+domains_only_for_browserless = ["twitter", "x", "facebook","ucarspro"] # Add more domains here
 
 # Create FastAPI app
 app = FastAPI()
@@ -122,7 +122,7 @@ def parse_html_to_markdown(html, url):
     return {
         "title": BeautifulSoup(html, 'html.parser').title.string if BeautifulSoup(html, 'html.parser').title else 'No title',
         "url": url,
-        "md": clean_markdown(markdown_content)
+        "markdown_content": clean_markdown(markdown_content)
     }
 
 def clean_markdown(markdown):
@@ -131,7 +131,7 @@ def clean_markdown(markdown):
     cleaned_lines = [line.strip() for line in lines if line.strip()]
     return '\n'.join(cleaned_lines)
 
-def search(query: str, num_results: int) -> list:
+def search(query: str, num_results: int,json_response:bool=False) -> list:
     searxng_query_url = f"{SEARXNG_URL}/search?q={query}&categories=general&format=json"
     try:
         response = httpx.get(searxng_query_url, headers=HEADERS, timeout=REQUEST_TIMEOUT)
@@ -142,41 +142,51 @@ def search(query: str, num_results: int) -> list:
         return [{"error": f"Search query failed with HTTP error: {e}"}]
 
     search_results = response.json()
-    results = []
-    
+    json_return = []
+    markdown_return = ""
     for result in search_results["results"][:num_results]:
         url = result["url"]
         title = result["title"]
         html_content = fetch_content(url)
         if html_content:
             markdown_data = parse_html_to_markdown(html_content, url)
-            results.append({
-                "title": title,
-                "url": url,
-                "markdown_content": (
+            if json_response:
+                json_return.append(markdown_data)
+            else: 
+                markdown_return += (
                 f"Title: {markdown_data['title']}\n\n"
                 f"URL Source: {markdown_data['url']}\n\n"
-                f"Markdown Content:\n{markdown_data['md']}"
-            )
-            })
+                f"Markdown Content:\n{markdown_data['markdown_content']}"
+            ) + "\n\n ---------------- \n\n"
+                
     
-    return results
+    if json_response:
+        return JSONResponse(json_return)
+    return PlainTextResponse(markdown_return)
 
-@app.get("/", response_class=JSONResponse)
-def get_search_results(q: str = Query(..., description="Search query"), num_results: int = Query(5, description="Number of results")):
-    result_list = search(q, num_results)
+@app.get("/")
+def get_search_results(
+    q: str = Query(..., description="Search query"), 
+    num_results: int = Query(5, description="Number of results"),
+    format: str = Query("markdown", description="Output format (markdown or json)"),
+
+                       ):
+    result_list = search(q, num_results,format == "json")
     return result_list
 
-@app.get("/r/{url:path}", response_class=PlainTextResponse)
-def fetch_url(url: str):
+@app.get("/r/{url:path}")
+def fetch_url(url: str, format: str = Query("markdown", description="Output format (markdown or json)")):
     html_content = fetch_content(url)
     if html_content:
         markdown_data = parse_html_to_markdown(html_content, url)
+        if format == "json":
+            return JSONResponse(markdown_data)
+        
         response_text = (
-            f"Title: {markdown_data['title']}\n\n"
-            f"URL Source: {markdown_data['url']}\n\n"
-            f"Markdown Content:\n{markdown_data['md']}"
-        )
+                f"Title: {markdown_data['title']}\n\n"
+                f"URL Source: {markdown_data['url']}\n\n"
+                f"Markdown Content:\n{markdown_data['markdown_content']}"
+            )
         return PlainTextResponse(response_text)
     return PlainTextResponse("Failed to retrieve content")
 
