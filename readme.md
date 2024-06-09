@@ -8,19 +8,23 @@ This project provides a powerful web scraping tool that fetches search results a
 
 ## Table of Contents
 
-1. [Features](#features)
-2. [Prerequisites](#prerequisites)
-3. [Docker Setup](#docker-setup)
-4. [Manual Setup](#manual-setup)
-5. [Usage](#usage)
-   - [Search Endpoint](#search-endpoint)
-   - [Fetch URL Content](#fetch-url-content)
-6. [Using Proxies](#using-proxies)
-7. [Code Explanation](#code-explanation)
-8. [License](#license)
-9. [Author](#author)
-10. [Contributing](#contributing)
-11. [Acknowledgements](#acknowledgements)
+- [Jina.ai Alternative Search Result Scraper with Markdown Output Using FastAPI, SearXNG, and Browserless](#jinaai-alternative-search-result-scraper-with-markdown-output-using-fastapi-searxng-and-browserless)
+  - [Description](#description)
+  - [Table of Contents](#table-of-contents)
+  - [Features](#features)
+  - [Prerequisites](#prerequisites)
+  - [Docker Setup](#docker-setup)
+  - [Manual Setup](#manual-setup)
+  - [Usage](#usage)
+    - [Search Endpoint](#search-endpoint)
+    - [Fetch URL Content](#fetch-url-content)
+  - [Using Proxies](#using-proxies)
+  - [Code Explanation](#code-explanation)
+  - [License](#license)
+  - [Author](#author)
+  - [Contributing](#contributing)
+  - [Acknowledgements](#acknowledgements)
+  - [Star History](#star-history)
 
 ## Features
 
@@ -103,11 +107,12 @@ Follow these steps for manual setup:
 
 ### Search Endpoint
 
-To perform a search query, send a GET request to the root endpoint `/` with the query parameters `q` (search query) and `num_results` (number of results).
+To perform a search query, send a GET request to the root endpoint `/` with the query parameters `q` (search query), `num_results` (number of results) and `format` (get response in json or by default in md)
 
 Example:
 ```sh
-curl "http://localhost:8000/?q=python&num_results=5"
+curl "http://localhost:8000/?q=python&num_results=5&format=json" # for json format
+curl "http://localhost:8000/?q=python&num_results=5" # by default markdown
 ```
 
 ### Fetch URL Content
@@ -116,7 +121,8 @@ To fetch and convert the content of a specific URL to Markdown, send a GET reque
 
 Example:
 ```sh
-curl "http://localhost:8000/r/https://example.com"
+curl "http://localhost:8000/r/https://example.com&format=json" # for json format
+curl "http://localhost:8000/r/https://example.com" # by default markdown
 ```
 
 ## Using Proxies
