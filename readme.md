@@ -1,4 +1,4 @@
-# Search Result Scraper with Markdown Output Using FastAPI, SearXNG, and Browserless
+# Jina.ai Alternative Search Result Scraper with Markdown Output Using FastAPI, SearXNG, and Browserless
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
