@@ -132,11 +132,23 @@ def clean_html(html):
 
 def parse_html_to_markdown(html,url,title=None):
     cleaned_html = clean_html(html)
-    # markdown_content = md(cleaned_html)
-    markdown_content = html2text.html2text(cleaned_html)
+
+    # Convert the extracted HTML to Markdown
+    text_maker = html2text.HTML2Text()
+    text_maker.ignore_links = False  # Include links
+    text_maker.ignore_tables = False
+    text_maker.bypass_tables = False  # Format tables in Markdown
+    text_maker.ignore_images = False  # Include images
+    text_maker.protect_links = True   # Protect links from line breaks
+    text_maker.mark_code = True       # Mark code with [code]...[/code] blocks
+    
+    # Convert HTML to Markdown
+    markdown_content = text_maker.handle(cleaned_html)
+    
     title_ = title
     if title_ is None:
         title_ = BeautifulSoup(html, 'html.parser').title.string if BeautifulSoup(html, 'html.parser').title else 'No title'
+    
     return {
         "title": title_,
         "url": url,
