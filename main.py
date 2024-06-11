@@ -143,12 +143,6 @@ def parse_html_to_markdown(html,url,title=None):
         "markdown_content": markdown_content
     }
 
-def clean_markdown(markdown):
-    # Remove extra newlines and whitespace
-    lines = markdown.split('\n')
-    cleaned_lines = [line.strip() for line in lines if line.strip()]
-    return '\n'.join(cleaned_lines)
-
 def search(query: str, num_results: int,json_response:bool=False) -> list:
     searxng_query_url = f"{SEARXNG_URL}/search?q={query}&categories=general&format=json"
     try:
