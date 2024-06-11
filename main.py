@@ -3,10 +3,10 @@ from dotenv import load_dotenv
 import httpx
 from fastapi import FastAPI, Query
 from fastapi.responses import JSONResponse, PlainTextResponse
-from markdownify import markdownify as md
+# from markdownify import markdownify as md
 from bs4 import BeautifulSoup, Comment
 import json
-
+import html2text
 # Load .env file
 load_dotenv()
 
@@ -46,7 +46,10 @@ def fetch_browserless_content(url, proxies):
     try:
         browserless_url = f"{BROWSERLESS_URL}/content"
         
-        params = {}
+        params = {
+            # "headless": False,
+            # "stealth": True,
+        }
         if TOKEN:
             params['token'] = TOKEN
             
@@ -56,10 +59,13 @@ def fetch_browserless_content(url, proxies):
             
         browserless_data = {
             "url": url,
-            "rejectResourceTypes": ["image"],
-            "rejectRequestPattern": ["/^.*\\.(css)/"],
-            "gotoOptions": {"waitUntil": "networkidle2"},
-            "bestAttempt": True
+            "rejectResourceTypes": ["image","stylesheet"],
+            # "rejectRequestPattern": ["/^.*\\.(css)/"],
+            "gotoOptions": {"waitUntil": "networkidle0","timeout": 60000},
+            "bestAttempt": True,
+            # "viewport": {"width": 1920, "height": 1080,"isMobile":False},
+            "setJavaScriptEnabled":True,
+            
         }
         if PROXY_USERNAME and PROXY_PASSWORD:
             browserless_data["authenticate"] = {
@@ -103,8 +109,16 @@ def clean_html(html):
     soup = BeautifulSoup(html, 'html.parser')
     
     # Remove all script, style, and other unnecessary elements
-    for script_or_style in soup(["script", "style", "header", "footer", "noscript", "form", "input", "textarea", "select", "option", "button", "svg", "iframe", "object", "embed", "applet"]):
+    for script_or_style in soup(["script", "style", "header", "footer", "noscript", "form", "input", "textarea", "select", "option", "button", "svg", "iframe", "object", "embed", "applet","nav","navbar"]):
         script_or_style.decompose()
+
+    # remove ids "layers"
+    ids = ['layers']
+    
+    for id_ in ids:
+        tag = soup.find(id=id_)
+        if tag:
+            tag.decompose()
     
     # Remove unwanted classes and ids
     for tag in soup.find_all(True):
@@ -116,13 +130,17 @@ def clean_html(html):
     
     return str(soup)
 
-def parse_html_to_markdown(html, url):
+def parse_html_to_markdown(html,url,title=None):
     cleaned_html = clean_html(html)
-    markdown_content = md(cleaned_html)
+    # markdown_content = md(cleaned_html)
+    markdown_content = html2text.html2text(cleaned_html)
+    title_ = title
+    if title_ is None:
+        title_ = BeautifulSoup(html, 'html.parser').title.string if BeautifulSoup(html, 'html.parser').title else 'No title'
     return {
-        "title": BeautifulSoup(html, 'html.parser').title.string if BeautifulSoup(html, 'html.parser').title else 'No title',
+        "title": title_,
         "url": url,
-        "markdown_content": clean_markdown(markdown_content)
+        "markdown_content": markdown_content
     }
 
 def clean_markdown(markdown):
@@ -149,7 +167,7 @@ def search(query: str, num_results: int,json_response:bool=False) -> list:
         title = result["title"]
         html_content = fetch_content(url)
         if html_content:
-            markdown_data = parse_html_to_markdown(html_content, url)
+            markdown_data = parse_html_to_markdown(html_content,url,title=title)
             if json_response:
                 json_return.append(markdown_data)
             else: 

@@ -4,3 +4,4 @@ python-dotenv
 httpx
 markdownify
 beautifulsoup4
+html2text
