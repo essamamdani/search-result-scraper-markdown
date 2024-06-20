@@ -188,7 +188,7 @@ def related_searches(data: Dict[str, List[dict]], max_token: int = 2000) -> List
     else:
         import openai
         client = openai
-        model = os.getenv('OPENAI_MODEL', 'gpt-3.5-turbo-16k')
+        model = os.getenv('OPENAI_MODEL', 'gpt-3.5-turbo-0125')
     
     filtered_results = []
     batch_size = 10
