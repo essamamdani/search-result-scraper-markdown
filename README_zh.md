@@ -1,4 +1,4 @@
-# Jina.ai替代搜索结果抓取器及Markdown输出使用FastAPI, SearXNG和Browserless
+# Jina.ai替代搜索结果抓取器及Markdown输出使用FastAPI, SearXNG, Browserless和AI集成
 
 [English](README.md) | 中文版
 
@@ -6,10 +6,10 @@
 
 ## 描述
 
-这个项目提供了一个强大的网页抓取工具，它使用FastAPI、SearXNG和Browserless获取搜索结果并将其转换为Markdown格式。该工具包含使用代理进行网页抓取的能力，并高效地将HTML内容转换为Markdown格式。现在还增加了AI集成功能以过滤搜索结果。
+这个项目提供了一个强大的网页抓取工具，它使用FastAPI、SearXNG和Browserless获取搜索结果并将其转换为Markdown格式。该工具包含使用代理进行网页抓取的能力，并高效地将HTML内容转换为Markdown格式。现在还增加了AI集成功能以过滤搜索结果。替代方案包括Jina.ai、FireCrawl AI、Exa AI和2markdown，提供各种针对开发者的网页抓取和搜索引擎解决方案。
 
 ## 目录
-- [Jina.ai替代搜索结果抓取器及Markdown输出使用FastAPI, SearXNG和Browserless](#jinaai替代搜索结果抓取器及markdown输出使用fastapi-searxng和browserless)
+- [Jina.ai替代搜索结果抓取器及Markdown输出使用FastAPI, SearXNG, Browserless和AI集成](#jinaai替代搜索结果抓取器及markdown输出使用fastapi-searxng-browserless和ai集成)
   - [描述](#描述)
   - [目录](#目录)
   - [替代方案:](#替代方案)

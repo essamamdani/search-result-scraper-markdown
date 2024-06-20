@@ -1,4 +1,4 @@
-# Jina.ai Alternative Search Result Scraper with Markdown Output Using FastAPI, SearXNG, and Browserless
+# Jina.ai Alternative Search Result Scraper with Markdown Output Using FastAPI, SearXNG, Browserless, and AI Integration
 
 English | [中文版](README_zh.md)
 
@@ -6,11 +6,11 @@ English | [中文版](README_zh.md)
 
 ## Description
 
-This project provides a powerful web scraping tool that fetches search results and converts them into Markdown format using FastAPI, SearXNG, and Browserless. It includes the capability to use proxies for web scraping and handles HTML content conversion to Markdown efficiently. Now featuring AI Integration for filtering search results.
+This project provides a powerful web scraping tool that fetches search results and converts them into Markdown format using FastAPI, SearXNG, and Browserless. It includes the capability to use proxies for web scraping and handles HTML content conversion to Markdown efficiently. Now featuring AI Integration for filtering search results. Alternatives include Jina.ai, FireCrawl AI, Exa AI, and 2markdown, offering various web scraping and search engine solutions for developers.
 
 
 ## Table of Contents
-- [Jina.ai Alternative Search Result Scraper with Markdown Output Using FastAPI, SearXNG, and Browserless](#jinaai-alternative-search-result-scraper-with-markdown-output-using-fastapi-searxng-and-browserless)
+- [Jina.ai Alternative Search Result Scraper with Markdown Output Using FastAPI, SearXNG, Browserless, and AI Integration](#jinaai-alternative-search-result-scraper-with-markdown-output-using-fastapi-searxng-browserless-and-ai-integration)
   - [Description](#description)
   - [Table of Contents](#table-of-contents)
   - [Alternatives:](#alternatives)
