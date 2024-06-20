@@ -224,7 +224,7 @@ def related_searches(data: Dict[str, List[dict]], max_token: int = 2000) -> List
             temperature=0.5,
             max_tokens=max_token
         )
-        print("AI Filter response",response.choices[0].message.content)
+        # print("AI Filter response",response.choices[0].message.content)
         batch_filtered_results = json.loads(response.choices[0].message.content)
         filtered_results.extend(batch_filtered_results['results'])
     
