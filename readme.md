@@ -4,13 +4,14 @@
 
 ## Description
 
-This project provides a powerful web scraping tool that fetches search results and converts them into Markdown format using FastAPI, SearXNG, and Browserless. It includes the capability to use proxies for web scraping and handles HTML content conversion to Markdown efficiently.
+This project provides a powerful web scraping tool that fetches search results and converts them into Markdown format using FastAPI, SearXNG, and Browserless. It includes the capability to use proxies for web scraping and handles HTML content conversion to Markdown efficiently. Now featuring AI Integration for filtering search results.
+
 
 ## Table of Contents
-
 - [Jina.ai Alternative Search Result Scraper with Markdown Output Using FastAPI, SearXNG, and Browserless](#jinaai-alternative-search-result-scraper-with-markdown-output-using-fastapi-searxng-and-browserless)
   - [Description](#description)
   - [Table of Contents](#table-of-contents)
+  - [Alternatives:](#alternatives)
   - [Features](#features)
   - [Prerequisites](#prerequisites)
   - [Docker Setup](#docker-setup)
@@ -26,6 +27,14 @@ This project provides a powerful web scraping tool that fetches search results a
   - [Acknowledgements](#acknowledgements)
   - [Star History](#star-history)
 
+## Alternatives:
+
+- [Jina.ai](https://jina.ai/): A powerful search engine for developers.
+- [FireCrawl AI](https://firecrawl.dev/): A web scraping API for developers.
+- [Exa AI](https://exa.ai/): A web scraping API for developers.
+- [2markdown](https://2markdown.com/): A web scraping tool that converts HTML to Markdown.
+
+
 ## Features
 
 - **FastAPI**: A modern, fast web framework for building APIs with Python.
@@ -33,6 +42,7 @@ This project provides a powerful web scraping tool that fetches search results a
 - **Browserless**: A web browser automation service.
 - **Markdown Output**: Converts HTML content to Markdown format.
 - **Proxy Support**: Utilizes proxies for secure and anonymous scraping.
+- **AI Integration**: Filters search results using AI to provide the most relevant content.
 
 ## Prerequisites
 
@@ -82,15 +92,25 @@ Follow these steps for manual setup:
 
 4. **Create a .env file** in the root directory with the following content:
     ```bash
-    SEARXNG_URL=http://localhost:8080
-    BROWSERLESS_URL=http://localhost:3000
-    TOKEN=BROWSERLESS_TOKEN
-    #PROXY_PROTOCOL=http
-    #PROXY_URL=your_proxy_url
-    #PROXY_USERNAME=your_proxy_username
-    #PROXY_PASSWORD=your_proxy_password
-    #PROXY_PORT=your_proxy_port
-    REQUEST_TIMEOUT=300
+    SEARXNG_URL=http://searxng:8080
+    BROWSERLESS_URL=http://browserless:3000
+    TOKEN=your_browserless_token_here  # Replace with your actual token
+    # PROXY_PROTOCOL=http
+    # PROXY_URL=your_proxy_url
+    # PROXY_USERNAME=your_proxy_username
+    # PROXY_PASSWORD=your_proxy_password
+    # PROXY_PORT=your_proxy_port
+    REQUEST_TIMEOUT=30
+
+    # AI Integration for search result filter
+    FILTER_SEARCH_RESULT_BY_AI=true
+    AI_ENGINE=groq
+    # GROQ
+    GROQ_API_KEY=yours_groq_api_key_here
+    GROQ_MODEL=llama3-8b-8192
+    # OPENAI
+    # OPENAI_API_KEY=your_openai_api_key_here
+    # OPENAI_MODEL=gpt-3.5-turbo-0125
     ```
 
 5. **Run Docker containers for SearXNG and Browserless**:
@@ -107,12 +127,12 @@ Follow these steps for manual setup:
 
 ### Search Endpoint
 
-To perform a search query, send a GET request to the root endpoint `/` with the query parameters `q` (search query), `num_results` (number of results) and `format` (get response in json or by default in md)
+To perform a search query, send a GET request to the root endpoint `/` with the query parameters `q` (search query), `num_results` (number of results), and `format` (get response in JSON or by default in Markdown).
 
 Example:
 ```sh
-curl "http://localhost:8000/?q=python&num_results=5&format=json" # for json format
-curl "http://localhost:8000/?q=python&num_results=5" # by default markdown
+curl "http://localhost:8000/?q=python&num_results=5&format=json" # for JSON format
+curl "http://localhost:8000/?q=python&num_results=5" # by default Markdown
 ```
 
 ### Fetch URL Content
@@ -121,8 +141,8 @@ To fetch and convert the content of a specific URL to Markdown, send a GET reque
 
 Example:
 ```sh
-curl "http://localhost:8000/r/https://example.com&format=json" # for json format
-curl "http://localhost:8000/r/https://example.com" # by default markdown
+curl "http://localhost:8000/r/https://example.com&format=json" # for JSON format
+curl "http://localhost:8000/r/https://example.com" # by default Markdown
 ```
 
 ## Using Proxies
