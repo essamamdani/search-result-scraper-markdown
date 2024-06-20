@@ -178,8 +178,6 @@ def related_searches(data: Dict[str, List[dict]], max_token: int = 2000) -> List
         f' Return the results in JSON format using The JSON object must use the schema: {json.dumps(SearchResult.schema())}'
     )
     
-    AI_ENGINE = "openai"  # Example AI engine, update as needed
-    
     if AI_ENGINE == "groq":
         from groq import Groq
         client = Groq()
