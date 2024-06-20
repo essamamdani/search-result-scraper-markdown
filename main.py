@@ -1,4 +1,8 @@
 import os
+from typing import List, Dict
+
+from pydantic import BaseModel
+
 from dotenv import load_dotenv
 import httpx
 from fastapi import FastAPI, Query
@@ -12,6 +16,7 @@ load_dotenv()
 
 # Retrieve environment variables
 SEARXNG_URL = os.getenv('SEARXNG_URL')
+print("SEARXNG_URL",SEARXNG_URL)
 BROWSERLESS_URL = os.getenv('BROWSERLESS_URL')
 TOKEN = os.getenv('TOKEN')
 PROXY_PROTOCOL = os.getenv('PROXY_PROTOCOL', 'http')
@@ -21,9 +26,12 @@ PROXY_PASSWORD = os.getenv('PROXY_PASSWORD')
 PROXY_PORT = os.getenv('PROXY_PORT')
 REQUEST_TIMEOUT = int(os.getenv('REQUEST_TIMEOUT', '30'))
 
+# AI Integration
+FILTER_SEARCH_RESULT_BY_AI = os.getenv('FILTER_SEARCH_RESULT_BY_AI', 'false').lower() == 'true'
+AI_ENGINE = os.getenv('AI_ENGINE','openai')
+
 # Domains that should only be accessed using Browserless
 domains_only_for_browserless = ["twitter", "x", "facebook","ucarspro"] # Add more domains here
-
 # Create FastAPI app
 app = FastAPI()
 
@@ -154,6 +162,73 @@ def parse_html_to_markdown(html,url,title=None):
         "url": url,
         "markdown_content": markdown_content
     }
+def related_searches(data: Dict[str, List[dict]], max_token: int = 2000) -> List[dict]:
+    client = None
+    model = None
+    class ResultItem(BaseModel):
+        title: str
+        url: str
+        content: str
+    class SearchResult(BaseModel):
+            results: List[ResultItem]
+    system_message = (
+        'You will be given a JSON format of search results and a search query. '
+        'Extract only "exact and most" related search `results` based on the `query`. '
+        'If the "content" field is empty, use the "title" or "url" field to determine relevance. '
+        f' Return the results in JSON format using The JSON object must use the schema: {json.dumps(SearchResult.schema())}'
+    )
+    
+    AI_ENGINE = "openai"  # Example AI engine, update as needed
+    
+    if AI_ENGINE == "groq":
+        from groq import Groq
+        client = Groq()
+        model = os.getenv('GROQ_MODEL', 'llama3-8b-8192')
+        
+        system_message += f" The JSON object must use the schema: {json.dumps(SearchResult.schema(), indent=2)}"
+    
+    else:
+        import openai
+        client = openai
+        model = os.getenv('OPENAI_MODEL', 'gpt-3.5-turbo-16k')
+    
+    filtered_results = []
+    batch_size = 10
+    query = data["query"]
+    results = data["results"]
+    
+    for i in range(0, len(results), batch_size):
+        batch = results[i:i+batch_size]
+        processed_batch = [
+            {
+                "title": item.get("title", ""),
+                "url": item.get("url", ""),
+                "content": item.get("content", "")
+            } 
+            for item in batch
+        ]
+
+        response = client.chat.completions.create(
+            model=model,
+            stream=False,
+            messages=[
+                {
+                    "role": "system",
+                    "content": system_message
+                },
+                {
+                    "role": "user",
+                    "content": json.dumps({"query": query, "results": processed_batch}) + "\n\nExtract the most relevant search results based on the query and ensure each result contains \"content.\" Return them in JSON format with \"title,\" \"url,\" and \"content\" fields only."
+                }
+            ],
+            temperature=0.5,
+            max_tokens=max_token
+        )
+        print("AI Filter response",response.choices[0].message.content)
+        batch_filtered_results = json.loads(response.choices[0].message.content)
+        filtered_results.extend(batch_filtered_results['results'])
+    
+    return {"results":filtered_results, "query": query}
 
 def search(query: str, num_results: int,json_response:bool=False) -> list:
     searxng_query_url = f"{SEARXNG_URL}/search?q={query}&categories=general&format=json"
@@ -166,6 +241,9 @@ def search(query: str, num_results: int,json_response:bool=False) -> list:
         return [{"error": f"Search query failed with HTTP error: {e}"}]
 
     search_results = response.json()
+    if FILTER_SEARCH_RESULT_BY_AI:
+        search_results = related_searches(search_results)
+
     json_return = []
     markdown_return = ""
     for result in search_results["results"][:num_results]:

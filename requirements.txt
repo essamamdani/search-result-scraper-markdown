@@ -3,5 +3,8 @@ uvicorn
 python-dotenv
 httpx
 markdownify
+openai
+groq
 beautifulsoup4
 html2text
+pydantic
