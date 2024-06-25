@@ -8,7 +8,6 @@ English | [中文版](README_zh.md)
 
 This project provides a powerful web scraping tool that fetches search results and converts them into Markdown format using FastAPI, SearXNG, and Browserless. It includes the capability to use proxies for web scraping and handles HTML content conversion to Markdown efficiently. Now featuring AI Integration for filtering search results. Alternatives include Jina.ai, FireCrawl AI, Exa AI, and 2markdown, offering various web scraping and search engine solutions for developers.
 
-
 ## Table of Contents
 - [Jina.ai Alternative Search Result Scraper with Markdown Output Using FastAPI, SearXNG, Browserless, and AI Integration](#jinaai-alternative-search-result-scraper-with-markdown-output-using-fastapi-searxng-browserless-and-ai-integration)
   - [Description](#description)
@@ -21,7 +20,10 @@ This project provides a powerful web scraping tool that fetches search results a
   - [Usage](#usage)
     - [Search Endpoint](#search-endpoint)
     - [Fetch URL Content](#fetch-url-content)
+    - [Fetching Images](#fetching-images)
+    - [Fetching Videos](#fetching-videos)
   - [Using Proxies](#using-proxies)
+  - [Roadmap](#roadmap)
   - [Code Explanation](#code-explanation)
   - [License](#license)
   - [Author](#author)
@@ -36,7 +38,6 @@ This project provides a powerful web scraping tool that fetches search results a
 - [Exa AI](https://exa.ai/): A web scraping API for developers.
 - [2markdown](https://2markdown.com/): A web scraping tool that converts HTML to Markdown.
 
-
 ## Features
 
 - **FastAPI**: A modern, fast web framework for building APIs with Python.
@@ -44,7 +45,9 @@ This project provides a powerful web scraping tool that fetches search results a
 - **Browserless**: A web browser automation service.
 - **Markdown Output**: Converts HTML content to Markdown format.
 - **Proxy Support**: Utilizes proxies for secure and anonymous scraping.
-- **AI Integration**: Filters search results using AI to provide the most relevant content.
+- **AI Integration (Reranker AI)**: Filters search results using AI to provide the most relevant content.
+- **YouTube Transcriptions**: Fetches YouTube video transcriptions.
+- **Image and Video Search**: Fetches images and video results using SearXNG.
 
 ## Prerequisites
 
@@ -147,9 +150,38 @@ curl "http://localhost:8000/r/https://example.com&format=json" # for JSON format
 curl "http://localhost:8000/r/https://example.com" # by default Markdown
 ```
 
+### Fetching Images
+
+To fetch image search results, send a GET request to the `/images` endpoint with the query parameters `q` (search query) and `num_results` (number of results).
+
+Example:
+```sh
+curl "http://localhost:8000/images?q=puppies&num_results=5"
+```
+
+### Fetching Videos
+
+To fetch video search results, send a GET request to the `/videos` endpoint with the query parameters `q` (search query) and `num_results` (number of results).
+
+Example:
+```sh
+curl "http://localhost:8000/videos?q=cooking+recipes&num_results=5"
+```
+
 ## Using Proxies
 
 This project uses Geonode proxies for web scraping. You can use [my Geonode affiliate link](https://geonode.com/invite/47389) to get started with their proxy services.
+
+## Roadmap
+
+- [x] **FastAPI**: A modern, fast web framework for building APIs with Python.
+- [x] **SearXNG**: An open-source internet metasearch engine.
+- [x] **Browserless**: A web browser automation service.
+- [x] **Markdown Output**: Converts HTML content to Markdown format.
+- [x] **Proxy Support**: Utilizes proxies for secure and anonymous scraping.
+- [x] **AI Integration (Reranker AI)**: Filters search results using AI to provide the most relevant content.
+- [x] **YouTube Transcriptions**: Fetches YouTube video transcriptions.
+- [x] **Image and Video Search**: Fetches images and video results using SearXNG.
 
 ## Code Explanation
 

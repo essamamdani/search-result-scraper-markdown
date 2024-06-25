@@ -8,3 +8,4 @@ groq
 beautifulsoup4
 html2text
 pydantic
+youtube-transcript-api

@@ -5,18 +5,20 @@ from pydantic import BaseModel
 
 from dotenv import load_dotenv
 import httpx
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, Request
 from fastapi.responses import JSONResponse, PlainTextResponse
-# from markdownify import markdownify as md
+
 from bs4 import BeautifulSoup, Comment
 import json
 import html2text
+from youtube_transcript_api import YouTubeTranscriptApi
+import re
+
 # Load .env file
 load_dotenv()
 
 # Retrieve environment variables
 SEARXNG_URL = os.getenv('SEARXNG_URL')
-print("SEARXNG_URL",SEARXNG_URL)
 BROWSERLESS_URL = os.getenv('BROWSERLESS_URL')
 TOKEN = os.getenv('TOKEN')
 PROXY_PROTOCOL = os.getenv('PROXY_PROTOCOL', 'http')
@@ -28,10 +30,11 @@ REQUEST_TIMEOUT = int(os.getenv('REQUEST_TIMEOUT', '30'))
 
 # AI Integration
 FILTER_SEARCH_RESULT_BY_AI = os.getenv('FILTER_SEARCH_RESULT_BY_AI', 'false').lower() == 'true'
-AI_ENGINE = os.getenv('AI_ENGINE','openai')
+AI_ENGINE = os.getenv('AI_ENGINE', 'openai')
 
 # Domains that should only be accessed using Browserless
-domains_only_for_browserless = ["twitter", "x", "facebook","ucarspro"] # Add more domains here
+domains_only_for_browserless = ["twitter", "x", "facebook", "ucarspro"]
+
 # Create FastAPI app
 app = FastAPI()
 
@@ -39,85 +42,110 @@ HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
 }
 
-def fetch_normal_content(url, proxies):
-    try:
-        response = httpx.get(url, headers=HEADERS, timeout=REQUEST_TIMEOUT, proxies=proxies)
-        response.raise_for_status()
-        return response.text
-    except httpx.RequestError as e:
-        print(f"An error occurred while requesting {url}: {e}")
-    except httpx.HTTPStatusError as e:
-        print(f"HTTP error occurred: {e}")
-    return None
-
-def fetch_browserless_content(url, proxies):
-    try:
-        browserless_url = f"{BROWSERLESS_URL}/content"
-        
-        params = {
-            # "headless": False,
-            # "stealth": True,
-        }
-        if TOKEN:
-            params['token'] = TOKEN
-            
-        proxy_url = f"{PROXY_PROTOCOL}://{PROXY_URL}:{PROXY_PORT}" if PROXY_URL and PROXY_PORT else None
-        if proxy_url:
-            params['--proxy-server'] = proxy_url
-            
-        browserless_data = {
-            "url": url,
-            "rejectResourceTypes": ["image","stylesheet"],
-            # "rejectRequestPattern": ["/^.*\\.(css)/"],
-            "gotoOptions": {"waitUntil": "networkidle0","timeout": 60000},
-            "bestAttempt": True,
-            # "viewport": {"width": 1920, "height": 1080,"isMobile":False},
-            "setJavaScriptEnabled":True,
-            
-        }
-        if PROXY_USERNAME and PROXY_PASSWORD:
-            browserless_data["authenticate"] = {
-                "username": PROXY_USERNAME,
-                "password": PROXY_PASSWORD
-            }
-            
-        headers = {
-            'Cache-Control': 'no-cache',
-            'Content-Type': 'application/json'
-        }
-        
-        response = httpx.post(browserless_url, params=params, headers=headers, data=json.dumps(browserless_data), timeout=REQUEST_TIMEOUT*2)
-
-        response.raise_for_status()
-        return response.text
-    except httpx.RequestError as e:
-        print(f"An error occurred while requesting Browserless for {url}: {e}")
-    except httpx.HTTPStatusError as e:
-        print(f"HTTP error occurred with Browserless: {e}")
-    return None
-
-def fetch_content(url):
-    proxies = None
+def get_proxies(without=False):
     if PROXY_URL and PROXY_USERNAME and PROXY_PORT:
-        proxies = {
+        if without:
+            return {
+                "http": f"{PROXY_PROTOCOL}://{PROXY_USERNAME}:{PROXY_PASSWORD}@{PROXY_URL}:{PROXY_PORT}",
+                "https": f"{PROXY_PROTOCOL}://{PROXY_USERNAME}:{PROXY_PASSWORD}@{PROXY_URL}:{PROXY_PORT}"
+            }
+        return {
             "http://": f"{PROXY_PROTOCOL}://{PROXY_USERNAME}:{PROXY_PASSWORD}@{PROXY_URL}:{PROXY_PORT}",
             "https://": f"{PROXY_PROTOCOL}://{PROXY_USERNAME}:{PROXY_PASSWORD}@{PROXY_URL}:{PROXY_PORT}"
         }
-        print(f"Using proxy {proxies}")
+    return None
+
+def fetch_content(url):
+    proxies = get_proxies()
+    def fetch_normal_content(url):
+        try:
+            response = httpx.get(url, headers=HEADERS, timeout=REQUEST_TIMEOUT, proxies=proxies, follow_redirects=True)
+            response.raise_for_status()
+            return response.text
+        except httpx.RequestError as e:
+            print(f"An error occurred while requesting {url}: {e}")
+        except httpx.HTTPStatusError as e:
+            print(f"HTTP error occurred: {e}")
+        return None
+
+    def fetch_browserless_content(url):
+        try:
+            browserless_url = f"{BROWSERLESS_URL}/content"
+            params = {
+                # "headless": False,
+                # "stealth": True,
+            }
+            if TOKEN:
+                params['token'] = TOKEN
+
+            proxy_url = f"{PROXY_PROTOCOL}://{PROXY_URL}:{PROXY_PORT}" if PROXY_URL and PROXY_PORT else None
+            if proxy_url:
+                params['--proxy-server'] = proxy_url
+
+            browserless_data = {
+                "url": url,
+                "rejectResourceTypes": ["image", "stylesheet"],
+                "gotoOptions": {"waitUntil": "networkidle0", "timeout": 60000},
+                "bestAttempt": True,
+                "setJavaScriptEnabled": True,
+            }
+            if PROXY_USERNAME and PROXY_PASSWORD:
+                browserless_data["authenticate"] = {
+                    "username": PROXY_USERNAME,
+                    "password": PROXY_PASSWORD
+                }
+
+            headers = {
+                'Cache-Control': 'no-cache',
+                'Content-Type': 'application/json'
+            }
+
+            response = httpx.post(browserless_url, params=params, headers=headers, data=json.dumps(browserless_data), timeout=REQUEST_TIMEOUT * 2)
+            response.raise_for_status()
+            return response.text
+        except httpx.RequestError as e:
+            print(f"An error occurred while requesting Browserless for {url}: {e}")
+        except httpx.HTTPStatusError as e:
+            print(f"HTTP error occurred with Browserless: {e}")
+        return None
+
     if any(domain in url for domain in domains_only_for_browserless):
-        content = fetch_browserless_content(url, proxies)
+        content = fetch_browserless_content(url)
     else:
-        content = fetch_normal_content(url, proxies)
+        content = fetch_normal_content(url)
         if content is None:
-            content = fetch_browserless_content(url, proxies)
+            content = fetch_browserless_content(url)
 
     return content
+
+def get_transcript(video_id: str, format: str = "markdown"):
+    try:
+        transcript_list = YouTubeTranscriptApi.get_transcript(video_id, proxies=get_proxies(without=True))
+        transcript = " ".join([entry['text'] for entry in transcript_list])
+
+        # Fetch the title from the video page
+        video_url = f"https://www.youtube.com/watch?v={video_id}"
+        video_page = fetch_content(video_url)
+        title = extract_title(video_page)
+
+        if format == "json":
+            return JSONResponse({"url": video_url, "title": title, "transcript": transcript})
+        return PlainTextResponse(f"Title: {title}\n\nURL Source: {video_url}\n\nTranscript:\n{transcript}")
+    except Exception as e:
+        return PlainTextResponse(f"Failed to retrieve transcript: {str(e)}")
+
+def extract_title(html_content):
+    if html_content:
+        soup = BeautifulSoup(html_content, 'html.parser')
+        title = soup.find("title")
+        return title.string.replace(" - YouTube", "") if title else 'No title'
+    return 'No title'
 
 def clean_html(html):
     soup = BeautifulSoup(html, 'html.parser')
     
     # Remove all script, style, and other unnecessary elements
-    for script_or_style in soup(["script", "style", "header", "footer", "noscript", "form", "input", "textarea", "select", "option", "button", "svg", "iframe", "object", "embed", "applet","nav","navbar"]):
+    for script_or_style in soup(["script", "style", "header", "footer", "noscript", "form", "input", "textarea", "select", "option", "button", "svg", "iframe", "object", "embed", "applet", "nav", "navbar"]):
         script_or_style.decompose()
 
     # remove ids "layers"
@@ -138,8 +166,9 @@ def clean_html(html):
     
     return str(soup)
 
-def parse_html_to_markdown(html,url,title=None):
+def parse_html_to_markdown(html, url, title=None):
     cleaned_html = clean_html(html)
+    title_ = title or extract_title(html)
 
     # Convert the extracted HTML to Markdown
     text_maker = html2text.HTML2Text()
@@ -153,16 +182,13 @@ def parse_html_to_markdown(html,url,title=None):
     # Convert HTML to Markdown
     markdown_content = text_maker.handle(cleaned_html)
     
-    title_ = title
-    if title_ is None:
-        title_ = BeautifulSoup(html, 'html.parser').title.string if BeautifulSoup(html, 'html.parser').title else 'No title'
-    
     return {
         "title": title_,
         "url": url,
         "markdown_content": markdown_content
     }
-def related_searches(data: Dict[str, List[dict]], max_token: int = 2000) -> List[dict]:
+
+def rerenker_ai(data: Dict[str, List[dict]], max_token: int = 2000) -> List[dict]:
     client = None
     model = None
     class ResultItem(BaseModel):
@@ -170,21 +196,19 @@ def related_searches(data: Dict[str, List[dict]], max_token: int = 2000) -> List
         url: str
         content: str
     class SearchResult(BaseModel):
-            results: List[ResultItem]
+        results: List[ResultItem]
     system_message = (
         'You will be given a JSON format of search results and a search query. '
         'Extract only "exact and most" related search `results` based on the `query`. '
         'If the "content" field is empty, use the "title" or "url" field to determine relevance. '
-        f' Return the results in JSON format using The JSON object must use the schema: {json.dumps(SearchResult.schema())}'
+        f' Return the results in same JSON format as you would be given, the JSON object must use the schema: {json.dumps(SearchResult.schema())}'
     )
     
     if AI_ENGINE == "groq":
         from groq import Groq
         client = Groq()
         model = os.getenv('GROQ_MODEL', 'llama3-8b-8192')
-        
-        system_message += f" The JSON object must use the schema: {json.dumps(SearchResult.schema(), indent=2)}"
-    
+
     else:
         import openai
         client = openai
@@ -220,18 +244,24 @@ def related_searches(data: Dict[str, List[dict]], max_token: int = 2000) -> List
                 }
             ],
             temperature=0.5,
-            max_tokens=max_token
-        )
-        # print("AI Filter response",response.choices[0].message.content)
-        batch_filtered_results = json.loads(response.choices[0].message.content)
-        filtered_results.extend(batch_filtered_results['results'])
-    
-    return {"results":filtered_results, "query": query}
+            max_tokens=max_token,
+            response_format={"type":"json_object"}
 
-def search(query: str, num_results: int,json_response:bool=False) -> list:
-    searxng_query_url = f"{SEARXNG_URL}/search?q={query}&categories=general&format=json"
+        )
+        print(response.choices[0].message.content)
+        batch_filtered_results = json.loads(response.choices[0].message.content)
+        if 'results' in batch_filtered_results:
+            filtered_results.extend(batch_filtered_results['results'])
+        else:
+            print(f"Warning: 'results' key missing in batch response: {batch_filtered_results}")
+
+    
+    return {"results": filtered_results, "query": query}
+
+def searxng(query: str, categories: str = "general") -> list:
+    searxng_url = f"{SEARXNG_URL}/search?q={query}&categories={categories}&format=json"
     try:
-        response = httpx.get(searxng_query_url, headers=HEADERS, timeout=REQUEST_TIMEOUT)
+        response = httpx.get(searxng_url, headers=HEADERS, timeout=REQUEST_TIMEOUT)
         response.raise_for_status()
     except httpx.RequestError as e:
         return [{"error": f"Search query failed with error: {e}"}]
@@ -239,43 +269,72 @@ def search(query: str, num_results: int,json_response:bool=False) -> list:
         return [{"error": f"Search query failed with HTTP error: {e}"}]
 
     search_results = response.json()
+    return search_results
+
+def search(query: str, num_results: int, json_response: bool = False) -> list:
+    search_results = searxng(query)
     if FILTER_SEARCH_RESULT_BY_AI:
-        search_results = related_searches(search_results)
+        search_results = rerenker_ai(search_results)
 
     json_return = []
     markdown_return = ""
     for result in search_results["results"][:num_results]:
         url = result["url"]
         title = result["title"]
+        if "youtube" in url:
+            video_id = re.search(r"v=([^&]+)", url)
+            if json_response:
+                json_return.append(get_transcript(video_id.group(1), "json"))
+            else:
+                markdown_return += get_transcript(video_id.group(1)) + "\n\n ---------------- \n\n"
+            continue
         html_content = fetch_content(url)
         if html_content:
-            markdown_data = parse_html_to_markdown(html_content,url,title=title)
-            if json_response:
-                json_return.append(markdown_data)
-            else: 
-                markdown_return += (
-                f"Title: {markdown_data['title']}\n\n"
-                f"URL Source: {markdown_data['url']}\n\n"
-                f"Markdown Content:\n{markdown_data['markdown_content']}"
-            ) + "\n\n ---------------- \n\n"
+            markdown_data = parse_html_to_markdown(html_content, url, title=title)
+            if markdown_data["markdown_content"].strip():  # Check if markdown content is not empty
+                if json_response:
+                    json_return.append(markdown_data)
+                else:
+                    markdown_return += (
+                    f"Title: {markdown_data['title']}\n\n"
+                    f"URL Source: {markdown_data['url']}\n\n"
+                    f"Markdown Content:\n{markdown_data['markdown_content']}"
+                ) + "\n\n ---------------- \n\n"
                 
     
     if json_response:
         return JSONResponse(json_return)
     return PlainTextResponse(markdown_return)
 
+@app.get("/images")
+def get_search_images(
+    q: str = Query(..., description="Search images"),
+    num_results: int = Query(5, description="Number of results")
+    ):
+    result_list = searxng(q, categories="images")
+    return JSONResponse(result_list["results"][:num_results])
+
+@app.get("/videos")
+def get_search_videos(
+    q: str = Query(..., description="Search videos"),
+    num_results: int = Query(5, description="Number of results")
+    ):
+    result_list = searxng(q, categories="videos")
+    return JSONResponse(result_list["results"][:num_results])
+
 @app.get("/")
 def get_search_results(
     q: str = Query(..., description="Search query"), 
     num_results: int = Query(5, description="Number of results"),
-    format: str = Query("markdown", description="Output format (markdown or json)"),
-
-                       ):
-    result_list = search(q, num_results,format == "json")
+    format: str = Query("markdown", description="Output format (markdown or json)")):
+    result_list = search(q, num_results, format == "json")
     return result_list
 
 @app.get("/r/{url:path}")
-def fetch_url(url: str, format: str = Query("markdown", description="Output format (markdown or json)")):
+def fetch_url(request: Request, url: str, format: str = Query("markdown", description="Output format (markdown or json)")):
+    if "youtube" in url:
+        return get_transcript(request.query_params.get('v'), format)
+    
     html_content = fetch_content(url)
     if html_content:
         markdown_data = parse_html_to_markdown(html_content, url)
@@ -283,10 +342,10 @@ def fetch_url(url: str, format: str = Query("markdown", description="Output form
             return JSONResponse(markdown_data)
         
         response_text = (
-                f"Title: {markdown_data['title']}\n\n"
-                f"URL Source: {markdown_data['url']}\n\n"
-                f"Markdown Content:\n{markdown_data['markdown_content']}"
-            )
+            f"Title: {markdown_data['title']}\n\n"
+            f"URL Source: {markdown_data['url']}\n\n"
+            f"Markdown Content:\n{markdown_data['markdown_content']}"
+        )
         return PlainTextResponse(response_text)
     return PlainTextResponse("Failed to retrieve content")
 
