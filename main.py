@@ -26,7 +26,10 @@ PROXY_URL = os.getenv('PROXY_URL')
 PROXY_USERNAME = os.getenv('PROXY_USERNAME')
 PROXY_PASSWORD = os.getenv('PROXY_PASSWORD')
 PROXY_PORT = os.getenv('PROXY_PORT')
+
 REQUEST_TIMEOUT = int(os.getenv('REQUEST_TIMEOUT', '30'))
+
+
 
 # AI Integration
 FILTER_SEARCH_RESULT_BY_AI = os.getenv('FILTER_SEARCH_RESULT_BY_AI', 'false').lower() == 'true'
@@ -72,8 +75,8 @@ def fetch_content(url):
         try:
             browserless_url = f"{BROWSERLESS_URL}/content"
             params = {
-                # "headless": False,
-                # "stealth": True,
+                "headless": False,
+                "stealth": True,
             }
             if TOKEN:
                 params['token'] = TOKEN
@@ -85,7 +88,7 @@ def fetch_content(url):
             browserless_data = {
                 "url": url,
                 "rejectResourceTypes": ["image", "stylesheet"],
-                "gotoOptions": {"waitUntil": "networkidle0", "timeout": 60000},
+                "gotoOptions": {"waitUntil": "networkidle0", "timeout": REQUEST_TIMEOUT * 1000},
                 "bestAttempt": True,
                 "setJavaScriptEnabled": True,
             }
@@ -255,7 +258,6 @@ def rerenker_ai(data: Dict[str, List[dict]], max_token: int = 2000) -> List[dict
         else:
             print(f"Warning: 'results' key missing in batch response: {batch_filtered_results}")
 
-    
     return {"results": filtered_results, "query": query}
 
 def searxng(query: str, categories: str = "general") -> list:

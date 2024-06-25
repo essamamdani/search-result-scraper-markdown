@@ -7,5 +7,8 @@ openai
 groq
 beautifulsoup4
 html2text
-pydantic
 youtube-transcript-api
+# ballyregan
+# typer==0.6.1
+# rich==12.6.0
+# pydantic==1.10.17
