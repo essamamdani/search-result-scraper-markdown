@@ -13,7 +13,6 @@ import json
 import html2text
 from youtube_transcript_api import YouTubeTranscriptApi
 import re
-
 # Load .env file
 load_dotenv()
 
