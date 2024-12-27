@@ -185,7 +185,7 @@ This project uses Geonode proxies for web scraping. You can use [my Geonode affi
 
 ## Code Explanation
 
-For a detailed explanation of the code, visit the article [here](https://www.essamamdani.com/articles/search-result-scraper-markdown).
+For a detailed explanation of the code, visit the article [here](https://www.essamamdani.com/search-result-scraper-markdown).
 
 ## License
 
